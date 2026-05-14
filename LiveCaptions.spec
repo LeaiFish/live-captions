@@ -47,7 +47,11 @@ app = BUNDLE(
         'CFBundleName':               'Live Captions',
         'CFBundleDisplayName':        'Live Captions',
         'CFBundleShortVersionString': '1.1.0',
+        'CFBundleIconName':           'AppIcon',
         'LSMinimumSystemVersion':     '13.0',
+        'LSApplicationCategoryType':  'public.app-category.utilities',
+        'NSHighResolutionCapable':    True,
+        'NSPrincipalClass':           'NSApplication',
         'NSMicrophoneUsageDescription':
             'Live Captions needs microphone access to transcribe speech in real time.',
         'NSSpeechRecognitionUsageDescription':

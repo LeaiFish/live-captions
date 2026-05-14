@@ -59,8 +59,8 @@ def setup_global_hotkeys(on_toggle: callable, on_copy: callable) -> None:
 
 
 def main():
-    _set_dock_icon()
     root = tk.Tk()
+    _set_dock_icon()  # must be after tk.Tk() so NSApplication is already initialised
     history = History(max_lines=3)
     window = SubtitleWindow(root)
     result_queue = queue.Queue()
