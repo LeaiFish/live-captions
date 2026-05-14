@@ -57,6 +57,14 @@ class SubtitleWindow:
                                       fg=COLORS["cursor"], font=FONT, anchor="w")
         self._cursor_label.pack(fill="x", padx=(9, 0))
 
+        # Update wraplength whenever the window is resized
+        root.bind("<Configure>", self._on_resize)
+
+    def _on_resize(self, event) -> None:
+        wrap = max(100, self.root.winfo_width() - 50)
+        for lbl in self._labels:
+            lbl.configure(wraplength=wrap)
+
     def render(self, lines: list[str], partial: str) -> None:
         color_map = [COLORS["old"], COLORS["mid"], COLORS["current"]]
         # Pad lines to always fill 3 slots
