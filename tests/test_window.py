@@ -21,11 +21,12 @@ def test_partial_does_not_overwrite_confirmed_line(root):
     w = SubtitleWindow(root)
     w.render(lines=["confirmed sentence."], partial="still speaking")
     root.update_idletasks()
-    # The confirmed line must remain in the last Text slot
-    last = w._texts[2].get("1.0", "end-1c")
-    assert last == "confirmed sentence."
-    # Partial must appear in the cursor label
-    assert "still speaking" in w._cursor_label.cget("text")
+    # Last confirmed line stays in slot 2
+    text = w._canvas.itemcget(w._line_ids[2], "text")
+    assert text == "confirmed sentence."
+    # Partial appears in cursor slot
+    partial_text = w._canvas.itemcget(w._partial_id, "text")
+    assert "still speaking" in partial_text
 
 def test_recognizer_imports():
     from recognizer import Recognizer

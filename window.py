@@ -8,15 +8,24 @@ COLORS = {
     "accent": "#6c8eff",
     "cursor": "#6c8eff",
 }
-FONT = ("System", 13)
 FONT_SMALL = ("System", 12)
+FONT_CURSOR = ("System", 13)
+
+CANVAS_W = 460
+CANVAS_H = 200
+WRAP_W = 420       # text wraps at this pixel width
+PAD_X = 20        # left margin for text
+BAR_X = 14        # x position of accent bar
+SLOT_H = 50       # pixels allocated per subtitle slot (fits ~2 wrapped lines)
+SLOTS_Y = [20, 70, 120]   # top-y of each of the 3 slots
+PARTIAL_Y = 172   # y for the partial/cursor line
 
 
 class SubtitleWindow:
     def __init__(self, root: tk.Tk):
         self.root = root
         root.title("Live Captions")
-        root.geometry("460x200+100+760")
+        root.geometry(f"{CANVAS_W}x{CANVAS_H}+100+760")
         root.configure(bg=COLORS["bg"])
         root.wm_attributes("-topmost", True)
         try:
@@ -29,55 +38,54 @@ class SubtitleWindow:
         root.bind("<ButtonPress-1>", self._drag_start)
         root.bind("<B1-Motion>", self._drag_move)
 
+        self._canvas = tk.Canvas(root, width=CANVAS_W, height=CANVAS_H,
+                                 bg=COLORS["bg"], highlightthickness=0, bd=0)
+        self._canvas.pack(fill="both", expand=True)
+
         # Close button
-        close = tk.Label(root, text="×", bg=COLORS["bg"],
-                         fg=COLORS["mid"], font=("System", 16), cursor="hand2")
-        close.place(relx=1.0, x=-12, y=4, anchor="ne")
-        close.bind("<Button-1>", lambda _: root.destroy())
+        self._canvas.create_text(CANVAS_W - 14, 8, text="×",
+                                 fill=COLORS["old"], font=("System", 16),
+                                 anchor="ne", tags="close")
+        self._canvas.tag_bind("close", "<Button-1>", lambda _: root.destroy())
 
-        # Label area — pack_propagate(False) prevents children from expanding the frame
-        self._frame = tk.Frame(root, bg=COLORS["bg"])
-        self._frame.pack(fill="both", expand=True, padx=14, pady=(24, 10))
-        self._frame.pack_propagate(False)
+        # 3 subtitle text slots
+        line_colors = [COLORS["old"], COLORS["mid"], COLORS["current"]]
+        self._line_ids = [
+            self._canvas.create_text(PAD_X, SLOTS_Y[i], text="",
+                                     width=WRAP_W, fill=line_colors[i],
+                                     font=FONT_SMALL, anchor="nw")
+            for i in range(3)
+        ]
 
-        self._texts: list[tk.Text] = []
-        self._accent: list[tk.Frame] = []
-        for _ in range(3):
-            row = tk.Frame(self._frame, bg=COLORS["bg"])
-            row.pack(fill="x", pady=2)
-            bar = tk.Frame(row, width=3, bg=COLORS["bg"])
-            bar.pack(side="left", fill="y", padx=(0, 6))
-            txt = tk.Text(row, height=2, width=1, wrap="word",
-                          bg=COLORS["bg"], fg=COLORS["old"],
-                          font=FONT_SMALL, bd=0, highlightthickness=0,
-                          relief="flat", state="disabled", cursor="arrow")
-            txt.pack(side="left", fill="x", expand=True)
-            self._texts.append(txt)
-            self._accent.append(bar)
+        # Accent bar for current line (hidden by default)
+        self._bar = self._canvas.create_rectangle(
+            BAR_X, SLOTS_Y[2], BAR_X + 3, SLOTS_Y[2] + SLOT_H,
+            fill=COLORS["bg"], outline=""
+        )
 
-        self._cursor_label = tk.Label(self._frame, text="", bg=COLORS["bg"],
-                                      fg=COLORS["cursor"], font=FONT, anchor="w")
-        self._cursor_label.pack(fill="x", padx=(9, 0))
-
-    def _set_text(self, txt: tk.Text, content: str, color: str) -> None:
-        txt.configure(state="normal", fg=color)
-        txt.delete("1.0", "end")
-        if content:
-            txt.insert("1.0", content)
-            # Adjust height to fit wrapped content
-            txt.configure(height=max(1, int(txt.index("end-1c").split(".")[0])))
-        else:
-            txt.configure(height=1)
-        txt.configure(state="disabled")
+        # Partial / cursor text
+        self._partial_id = self._canvas.create_text(
+            PAD_X, PARTIAL_Y, text="", width=WRAP_W,
+            fill=COLORS["cursor"], font=FONT_CURSOR, anchor="nw"
+        )
 
     def render(self, lines: list[str], partial: str) -> None:
-        color_map = [COLORS["old"], COLORS["mid"], COLORS["current"]]
+        line_colors = [COLORS["old"], COLORS["mid"], COLORS["current"]]
         padded = ([""] * (3 - len(lines)) + lines)[-3:]
-        for i, (txt, bar, text) in enumerate(zip(self._texts, self._accent, padded)):
-            self._set_text(txt, text, color_map[i])
-            is_current = (i == 2 and text)
-            bar.configure(bg=COLORS["accent"] if is_current else COLORS["bg"])
-        self._cursor_label.configure(text=("▋  " + partial) if partial else "")
+
+        for i, (text, color) in enumerate(zip(padded, line_colors)):
+            self._canvas.itemconfigure(self._line_ids[i], text=text, fill=color)
+
+        # Accent bar: show next to current line if it has content
+        if padded[2]:
+            self._canvas.itemconfigure(self._bar, fill=COLORS["accent"])
+        else:
+            self._canvas.itemconfigure(self._bar, fill=COLORS["bg"])
+
+        self._canvas.itemconfigure(
+            self._partial_id,
+            text=("▋  " + partial) if partial else ""
+        )
 
     def _drag_start(self, event):
         self._drag_x = event.x
