@@ -16,7 +16,7 @@ def make_icon(size):
     def S(v): return int(round(v * sc))
     def W(v): return max(1, int(round(v * sc)))
 
-    BG   = hex_rgba('#c0b8b0')   # match macOS generic-app-template frame colour
+    BG   = hex_rgba('#0f0f1a')   # dark navy background
     BLUE = hex_rgba('#6c8eff')
     BLU6 = hex_rgba('#6c8eff', int(0.6 * 255))
     W92  = hex_rgba('#ffffff', int(0.92 * 255))
