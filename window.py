@@ -117,8 +117,17 @@ class SubtitleWindow:
         for i, (text, color) in enumerate(zip(padded, line_colors)):
             self._canvas.itemconfigure(self._line_ids[i], text=text, fill=color)
 
-        # Show/hide highlight on current slot
+        # Resize highlight to match actual text bbox
         if padded[2]:
+            self.root.update_idletasks()
+            bbox = self._canvas.bbox(self._line_ids[2])
+            if bbox:
+                x1, y1, x2, y2 = bbox
+                pad = 6
+                self._canvas.coords(self._hl_rect,
+                                    BAR_X + 3, y1 - pad, CANVAS_W - 10, y2 + pad)
+                self._canvas.coords(self._bar,
+                                    BAR_X, y1 - pad, BAR_X + 3, y2 + pad)
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["hl_bg"])
             self._canvas.itemconfigure(self._bar,     fill=COLORS["accent"])
         else:
