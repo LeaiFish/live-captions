@@ -25,8 +25,9 @@ PAD_X      = 22
 BAR_X      = 14
 TITLEBAR_H = 28
 
-# anchor="sw" — y is the BOTTOM of each text slot
 SLOTS_Y = [72, 112, 152]
+
+SCROLL_RESUME_MS = 3000  # ms of inactivity before returning to live mode
 
 
 class SubtitleWindow:
@@ -46,8 +47,15 @@ class SubtitleWindow:
         self._drag_x = 0
         self._drag_y = 0
         self._font_size = FONT_SIZE_DEFAULT
+
+        # Scroll state
+        self._all_lines: list[str] = []
+        self._scroll_offset = 0      # 0 = live; N = N lines back from end
+        self._scroll_timer  = None   # after() ID for auto-resume
+
         root.bind("<ButtonPress-1>", self._drag_start)
         root.bind("<B1-Motion>", self._drag_move)
+        root.bind("<MouseWheel>", self._on_scroll)
         root.bind("<Command-equal>", lambda _: self._adjust_alpha(0.1))
         root.bind("<Command-minus>", lambda _: self._adjust_alpha(-0.1))
         root.bind("<Command-Up>",    lambda _: self._adjust_font(2))
@@ -80,7 +88,14 @@ class SubtitleWindow:
                                  fill="#3f3f50", font=("System", 10),
                                  anchor="center")
 
-        # ── Highlight background + accent bar (behind text) ────────────
+        # Scroll position indicator (top-right, hidden by default)
+        self._scroll_label = self._canvas.create_text(
+            CANVAS_W - 12, DOT_Y,
+            text="", fill=COLORS["accent"],
+            font=("System", 9), anchor="e"
+        )
+
+        # ── Highlight background + accent bar ──────────────────────────
         hl_y1, hl_y2 = SLOTS_Y[2] - 28, SLOTS_Y[2] + 10
         self._hl_rect = self._canvas.create_rectangle(
             BAR_X + 4, hl_y1, CANVAS_W - 8, hl_y2,
@@ -106,6 +121,52 @@ class SubtitleWindow:
             0, 0, text="", width=0, fill=COLORS["bg"], anchor="sw"
         )
 
+    # ── Scroll ─────────────────────────────────────────────────────────
+
+    def _on_scroll(self, event) -> None:
+        if event.delta > 0:   # scroll up → go further back
+            max_offset = max(0, len(self._all_lines) - 1)
+            self._scroll_offset = min(self._scroll_offset + 1, max_offset)
+        else:                  # scroll down → approach live
+            self._scroll_offset = max(0, self._scroll_offset - 1)
+
+        if self._scroll_offset > 0:
+            self._draw_scroll_view()
+            self._reset_scroll_timer()
+        else:
+            self._resume_live()
+
+    def _draw_scroll_view(self) -> None:
+        lines = self._all_lines
+        end   = max(0, len(lines) - self._scroll_offset + 1)
+        start = max(0, end - 3)
+        visible = lines[start:end]
+        padded  = ([""] * (3 - len(visible)) + visible)[-3:]
+
+        colors = [COLORS["old"], COLORS["mid"], COLORS["old"]]
+        for i, (text, color) in enumerate(zip(padded, colors)):
+            self._canvas.itemconfigure(self._line_ids[i], text=text, fill=color)
+
+        # Hide live highlight
+        self._canvas.itemconfigure(self._hl_rect, fill=COLORS["bg"])
+        self._canvas.itemconfigure(self._bar,     fill=COLORS["bg"])
+
+        # Show position: "↑ 3 ago" etc.
+        label = f"↑ {self._scroll_offset} ago"
+        self._canvas.itemconfigure(self._scroll_label, text=label)
+
+    def _reset_scroll_timer(self) -> None:
+        if self._scroll_timer:
+            self.root.after_cancel(self._scroll_timer)
+        self._scroll_timer = self.root.after(SCROLL_RESUME_MS, self._resume_live)
+
+    def _resume_live(self) -> None:
+        self._scroll_offset = 0
+        self._scroll_timer  = None
+        self._canvas.itemconfigure(self._scroll_label, text="")
+
+    # ── Public API ─────────────────────────────────────────────────────
+
     def _apply_rounded_corners(self, radius: int = 12) -> None:
         try:
             from AppKit import NSApplication, NSColor
@@ -128,7 +189,14 @@ class SubtitleWindow:
         self._on_toggle = on_toggle
         self._on_copy = on_copy
 
-    def render(self, lines: list[str], partial: str) -> None:
+    def render(self, lines: list[str], partial: str, all_lines: list[str] | None = None) -> None:
+        if all_lines is not None:
+            self._all_lines = all_lines
+
+        # Don't overwrite display while user is scrolling history
+        if self._scroll_offset > 0:
+            return
+
         # slot 2 = partial while speaking, else most recent confirmed line
         if partial:
             current = partial

@@ -92,7 +92,7 @@ def main():
                         last_partial[0] = text
                         last_partial_t[0] = time.monotonic()
                 d = history.display()
-                window.render(lines=d["lines"], partial=d["partial"])
+                window.render(lines=d["lines"], partial=d["partial"], all_lines=transcript)
         except queue.Empty:
             pass
 
@@ -106,7 +106,7 @@ def main():
             history.update(text, is_final=True)
             transcript.append(text)
             d = history.display()
-            window.render(lines=d["lines"], partial=d["partial"])
+            window.render(lines=d["lines"], partial=d["partial"], all_lines=transcript)
 
         root.after(50, poll)
 
