@@ -16,9 +16,9 @@ CANVAS_H = 200
 WRAP_W = 420       # text wraps at this pixel width
 PAD_X = 20        # left margin for text
 BAR_X = 14        # x position of accent bar
-SLOT_H = 50       # pixels allocated per subtitle slot (fits ~2 wrapped lines)
-SLOTS_Y = [20, 70, 120]   # top-y of each of the 3 slots
-PARTIAL_Y = 172   # y for the partial/cursor line
+# anchor="sw" — text grows UPWARD from these y positions
+SLOTS_Y = [65, 120, 168]   # bottom-y of each slot (old, mid, current)
+PARTIAL_Y = 192            # bottom-y of partial/cursor line
 
 
 class SubtitleWindow:
@@ -53,20 +53,20 @@ class SubtitleWindow:
         self._line_ids = [
             self._canvas.create_text(PAD_X, SLOTS_Y[i], text="",
                                      width=WRAP_W, fill=line_colors[i],
-                                     font=FONT_SMALL, anchor="nw")
+                                     font=FONT_SMALL, anchor="sw")
             for i in range(3)
         ]
 
         # Accent bar for current line (hidden by default)
         self._bar = self._canvas.create_rectangle(
-            BAR_X, SLOTS_Y[2], BAR_X + 3, SLOTS_Y[2] + SLOT_H,
+            BAR_X, SLOTS_Y[2] - 36, BAR_X + 3, SLOTS_Y[2],
             fill=COLORS["bg"], outline=""
         )
 
         # Partial / cursor text
         self._partial_id = self._canvas.create_text(
             PAD_X, PARTIAL_Y, text="", width=WRAP_W,
-            fill=COLORS["cursor"], font=FONT_CURSOR, anchor="nw"
+            fill=COLORS["cursor"], font=FONT_CURSOR, anchor="sw"
         )
 
     def render(self, lines: list[str], partial: str) -> None:
