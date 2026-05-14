@@ -76,7 +76,7 @@ class SubtitleWindow:
         # ── Title bar ──────────────────────────────────────────────────
         DOT_Y, DOT_R = TITLEBAR_H // 2, 5
         for i, (color, action) in enumerate([
-            (COLORS["dot_r"], lambda _: root.destroy()),
+            (COLORS["dot_r"], lambda _: self._quit()),
             (COLORS["dot_y"], lambda _: None),
             (COLORS["dot_g"], lambda _: None),
         ]):
@@ -208,10 +208,11 @@ class SubtitleWindow:
             print(f"[Rounded] {e}", file=sys.stderr)
 
     def set_callbacks(self, on_toggle: callable, on_copy: callable,
-                      on_lang=None) -> None:
+                      on_lang=None, on_quit=None) -> None:
         self._on_toggle = on_toggle
         self._on_copy = on_copy
         self._on_lang = on_lang
+        self._on_quit = on_quit
 
     def set_lang_label(self, label: str) -> None:
         self._lang_label = label
@@ -275,11 +276,17 @@ class SubtitleWindow:
             menu.add_separator()
         if hasattr(self, "_on_toggle"):
             menu.add_command(label="Hide Window  ⌘⇧H", command=self._on_toggle)
-        menu.add_command(label="Quit", command=self.root.destroy)
+        menu.add_command(label="Quit", command=self._quit)
         try:
             menu.tk_popup(event.x_root, event.y_root)
         finally:
             menu.grab_release()
+
+    def _quit(self) -> None:
+        if hasattr(self, "_on_quit") and self._on_quit:
+            self._on_quit()
+        else:
+            self.root.destroy()
 
     def _adjust_font(self, delta: int) -> None:
         self._font_size = max(FONT_SIZE_MIN, min(FONT_SIZE_MAX, self._font_size + delta))

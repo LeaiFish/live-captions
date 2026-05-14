@@ -80,7 +80,7 @@ def main():
 
     setup_global_hotkeys(toggle_visibility, copy_last_sentence)
     window.set_callbacks(on_toggle=toggle_visibility, on_copy=copy_last_sentence,
-                         on_lang=switch_lang)
+                         on_lang=switch_lang, on_quit=lambda: on_close())
     window.set_lang_label("EN")
 
     def save_transcript() -> None:

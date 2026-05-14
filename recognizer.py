@@ -46,6 +46,10 @@ class Recognizer:
 
         self._request = Speech.SFSpeechAudioBufferRecognitionRequest.alloc().init()
         self._request.setShouldReportPartialResults_(True)
+        try:
+            self._request.setAddsPunctuation_(True)
+        except Exception:
+            pass  # macOS <13 fallback
 
         def handle_result(result, error):
             if error is not None:
