@@ -1,3 +1,4 @@
+import sys
 from typing import Callable
 
 import AVFoundation
@@ -32,7 +33,6 @@ class Recognizer:
     def _on_authorized(self, status) -> None:
         # SFSpeechRecognizerAuthorizationStatusAuthorized == 3
         if status != 3:
-            import sys
             print(f"[Recognizer] Permission denied (status={status}). Grant access in System Settings > Privacy > Speech Recognition.", file=sys.stderr)
             return
         self._begin(Speech.SFSpeechRecognizer.alloc().initWithLocale_(
@@ -49,7 +49,6 @@ class Recognizer:
 
         def handle_result(result, error):
             if error is not None:
-                import sys
                 print(f"[Recognizer] Recognition error: {error}", file=sys.stderr)
             if result is None:
                 return
