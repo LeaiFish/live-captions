@@ -3,8 +3,8 @@ import tkinter as tk
 
 COLORS = {
     "bg":      "#0f0f14",
-    "old":     "#3d3d3d",
-    "mid":     "#626262",
+    "old":     "#606070",
+    "mid":     "#a8a8b8",
     "current": "#ffffff",
     "accent":  "#6c8eff",
     "cursor":  "#8aabff",
@@ -19,13 +19,13 @@ FONT_SIZE_MIN = 10
 FONT_SIZE_MAX = 24
 
 CANVAS_W   = 420
-CANVAS_H   = 185
+CANVAS_H   = 158
 WRAP_W     = 370
 PAD_X      = 26
 BAR_X      = 14
 TITLEBAR_H = 28
 
-SLOTS_Y = [68, 112, 165]
+SLOTS_Y = [88, 110, 145]
 
 SCROLL_RESUME_MS = 3000  # ms of inactivity before returning to live mode
 
