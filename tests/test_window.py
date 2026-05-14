@@ -17,16 +17,21 @@ def test_render_updates_without_error(root):
     w.render(lines=["first.", "second."], partial="in prog")
     root.update_idletasks()
 
-def test_partial_does_not_overwrite_confirmed_line(root):
+def test_partial_in_slot2_while_speaking(root):
     w = SubtitleWindow(root)
     w.render(lines=["confirmed sentence."], partial="still speaking")
     root.update_idletasks()
-    # Last confirmed line stays in slot 2
-    text = w._canvas.itemcget(w._line_ids[2], "text")
-    assert text == "confirmed sentence."
-    # Partial appears in cursor slot
-    partial_text = w._canvas.itemcget(w._partial_id, "text")
-    assert "still speaking" in partial_text
+    # Partial goes in slot 2 (highlighted) while speaking
+    assert w._canvas.itemcget(w._line_ids[2], "text") == "still speaking"
+    # Confirmed line moves to slot 1
+    assert w._canvas.itemcget(w._line_ids[1], "text") == "confirmed sentence."
+
+def test_confirmed_line_in_slot2_when_silent(root):
+    w = SubtitleWindow(root)
+    w.render(lines=["confirmed sentence."], partial="")
+    root.update_idletasks()
+    # Last confirmed line shown in slot 2 when not speaking
+    assert w._canvas.itemcget(w._line_ids[2], "text") == "confirmed sentence."
 
 def test_recognizer_imports():
     from recognizer import Recognizer

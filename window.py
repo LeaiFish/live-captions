@@ -2,12 +2,12 @@ import tkinter as tk
 
 COLORS = {
     "bg":      "#0f0f14",
-    "old":     "#3d3d3d",   # rgba(255,255,255,0.22) on dark
-    "mid":     "#626262",   # rgba(255,255,255,0.38) on dark
+    "old":     "#3d3d3d",
+    "mid":     "#626262",
     "current": "#ffffff",
     "accent":  "#6c8eff",
-    "cursor":  "#6c8eff",
-    "hl_bg":   "#1e2848",   # rgba(108,142,255,0.22) blended on bg
+    "cursor":  "#8aabff",
+    "hl_bg":   "#1e2848",
     "dot_r":   "#ff5f56",
     "dot_y":   "#ffbd2e",
     "dot_g":   "#27c93f",
@@ -17,23 +17,22 @@ FONT_SIZE_DEFAULT = 12
 FONT_SIZE_MIN = 10
 FONT_SIZE_MAX = 24
 
-CANVAS_W  = 460
-CANVAS_H  = 228
-WRAP_W    = 420
-PAD_X     = 20
-BAR_X     = 14
+CANVAS_W   = 420
+CANVAS_H   = 168
+WRAP_W     = 376
+PAD_X      = 22
+BAR_X      = 14
 TITLEBAR_H = 28
 
 # anchor="sw" — y is the BOTTOM of each text slot
-SLOTS_Y   = [93, 148, 196]
-PARTIAL_Y = 220
+SLOTS_Y = [72, 112, 152]
 
 
 class SubtitleWindow:
     def __init__(self, root: tk.Tk):
         self.root = root
         root.title("Live Captions")
-        root.geometry(f"{CANVAS_W}x{CANVAS_H}+100+730")
+        root.geometry(f"{CANVAS_W}x{CANVAS_H}+100+800")
         root.configure(bg=COLORS["bg"])
         root.wm_attributes("-topmost", True)
         self._alpha = 0.85
@@ -78,10 +77,10 @@ class SubtitleWindow:
                                  fill="#3f3f50", font=("System", 10),
                                  anchor="center")
 
-        # ── Current-line highlight background + accent bar ─────────────
-        hl_y1, hl_y2 = SLOTS_Y[2] - 44, SLOTS_Y[2] + 6
+        # ── Highlight background + accent bar (behind text) ────────────
+        hl_y1, hl_y2 = SLOTS_Y[2] - 28, SLOTS_Y[2] + 10
         self._hl_rect = self._canvas.create_rectangle(
-            BAR_X + 4, hl_y1, CANVAS_W - 10, hl_y2,
+            BAR_X + 4, hl_y1, CANVAS_W - 8, hl_y2,
             fill=COLORS["bg"], outline=""
         )
         self._bar = self._canvas.create_rectangle(
@@ -90,20 +89,18 @@ class SubtitleWindow:
         )
 
         # ── 3 subtitle text slots ──────────────────────────────────────
-        line_colors = [COLORS["old"], COLORS["mid"], COLORS["current"]]
         self._line_ids = [
             self._canvas.create_text(PAD_X, SLOTS_Y[i], text="",
-                                     width=WRAP_W, fill=line_colors[i],
+                                     width=WRAP_W,
+                                     fill=[COLORS["old"], COLORS["mid"], COLORS["current"]][i],
                                      font=("System", self._font_size),
                                      anchor="sw")
             for i in range(3)
         ]
 
-        # ── Partial / cursor ───────────────────────────────────────────
+        # Keep for test compatibility — always empty now
         self._partial_id = self._canvas.create_text(
-            PAD_X, PARTIAL_Y, text="", width=WRAP_W,
-            fill=COLORS["cursor"], font=("System", self._font_size + 1),
-            anchor="sw"
+            0, 0, text="", width=0, fill=COLORS["bg"], anchor="sw"
         )
 
     def set_callbacks(self, on_toggle: callable, on_copy: callable) -> None:
@@ -111,21 +108,28 @@ class SubtitleWindow:
         self._on_copy = on_copy
 
     def render(self, lines: list[str], partial: str) -> None:
-        line_colors = [COLORS["old"], COLORS["mid"], COLORS["current"]]
-        padded = ([""] * (3 - len(lines)) + lines)[-3:]
+        # slot 2 = partial while speaking, else most recent confirmed line
+        if partial:
+            current = partial
+            current_color = COLORS["cursor"]
+            history = ([""] * 2 + list(lines))[-2:]
+        else:
+            current = lines[-1] if lines else ""
+            current_color = COLORS["current"]
+            history = ([""] * 2 + list(lines[:-1] if lines else []))[-2:]
 
-        for i, (text, color) in enumerate(zip(padded, line_colors)):
-            self._canvas.itemconfigure(self._line_ids[i], text=text, fill=color)
+        self._canvas.itemconfigure(self._line_ids[0], text=history[0], fill=COLORS["old"])
+        self._canvas.itemconfigure(self._line_ids[1], text=history[1], fill=COLORS["mid"])
+        self._canvas.itemconfigure(self._line_ids[2], text=current,    fill=current_color)
 
-        # Resize highlight to match actual current-line bbox
-        if padded[2]:
+        if current:
             self.root.update_idletasks()
             bbox = self._canvas.bbox(self._line_ids[2])
             if bbox:
                 x1, y1, x2, y2 = bbox
                 pad = 10
                 self._canvas.coords(self._hl_rect,
-                                    BAR_X + 4, y1 - pad, CANVAS_W - 10, y2 + pad)
+                                    BAR_X + 4, y1 - pad, CANVAS_W - 8, y2 + pad)
                 self._canvas.coords(self._bar,
                                     BAR_X, y1 - pad, BAR_X + 4, y2 + pad)
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["hl_bg"])
@@ -133,11 +137,6 @@ class SubtitleWindow:
         else:
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["bg"])
             self._canvas.itemconfigure(self._bar,     fill=COLORS["bg"])
-
-        self._canvas.itemconfigure(
-            self._partial_id,
-            text=("▋  " + partial) if partial else ""
-        )
 
     def _show_menu(self, event) -> None:
         menu = tk.Menu(self.root, tearoff=0,
@@ -164,11 +163,9 @@ class SubtitleWindow:
 
     def _adjust_font(self, delta: int) -> None:
         self._font_size = max(FONT_SIZE_MIN, min(FONT_SIZE_MAX, self._font_size + delta))
-        font        = ("System", self._font_size)
-        font_cursor = ("System", self._font_size + 1)
+        font = ("System", self._font_size)
         for lid in self._line_ids:
             self._canvas.itemconfigure(lid, font=font)
-        self._canvas.itemconfigure(self._partial_id, font=font_cursor)
 
     def _adjust_alpha(self, delta: float) -> None:
         self._alpha = max(0.2, min(1.0, self._alpha + delta))
@@ -184,7 +181,7 @@ class SubtitleWindow:
         sw = self.root.winfo_screenwidth()
         sh = self.root.winfo_screenheight()
         snap = 20
-        if x < snap:                  x = 0
+        if x < snap:                   x = 0
         elif x + CANVAS_W > sw - snap: x = sw - CANVAS_W
         if y < snap:                   y = 0
         elif y + CANVAS_H > sh - snap: y = sh - CANVAS_H
