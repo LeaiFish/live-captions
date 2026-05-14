@@ -16,15 +16,24 @@ def make_icon(size):
     def S(v): return int(round(v * sc))
     def W(v): return max(1, int(round(v * sc)))
 
-    BG   = hex_rgba('#0f0f1a')
-    FILL = hex_rgba('#1a1a2e')
     BLUE = hex_rgba('#6c8eff')
     BLU6 = hex_rgba('#6c8eff', int(0.6 * 255))
     W92  = hex_rgba('#ffffff', int(0.92 * 255))
     W65  = hex_rgba('#ffffff', int(0.65 * 255))
+    FILL = hex_rgba('#1e2c6e')   # bubble fill: deep blue
+    DARK = hex_rgba('#111a4a')   # bubble stroke background
 
-    # Full-bleed square background — macOS applies its own rounded corner mask
-    d.rectangle([0, 0, size - 1, size - 1], fill=BG)
+    # Blue gradient background using two horizontal bands
+    from PIL import Image as _Image
+    grad = _Image.new('RGBA', (1, size))
+    for y in range(size):
+        t = y / (size - 1)
+        r = int(0x10 + t * (0x06 - 0x10))
+        g = int(0x18 + t * (0x0a - 0x18))
+        b = int(0x6a + t * (0x38 - 0x6a))
+        grad.putpixel((0, y), (r, g, b, 255))
+    img.paste(grad.resize((size, size)), (0, 0))
+    d = ImageDraw.Draw(img)
 
     # Speech bubble fill
     d.rounded_rectangle([S(10), S(26), S(10) + S(94), S(26) + S(66)],
