@@ -4,15 +4,45 @@ from history import History
 from window import SubtitleWindow
 from recognizer import Recognizer
 
+# NSEvent key constants
+NSKeyDownMask = 1 << 10
+NSCommandKeyMask = 1 << 20
+NSShiftKeyMask = 1 << 17
+
+
+def setup_global_hotkey(callback):
+    """Listen for ⌘⇧H globally to toggle window visibility."""
+    try:
+        from AppKit import NSEvent
+
+        def handler(event):
+            flags = event.modifierFlags()
+            chars = event.charactersIgnoringModifiers()
+            if (flags & NSCommandKeyMask) and (flags & NSShiftKeyMask) and chars == "h":
+                callback()
+
+        NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(NSKeyDownMask, handler)
+    except Exception as e:
+        print(f"[Hotkey] Could not register global hotkey: {e}")
+
 
 def main():
     root = tk.Tk()
     history = History(max_lines=3)
     window = SubtitleWindow(root)
     result_queue = queue.Queue()
+    visible = [True]
+
+    def toggle_visibility():
+        visible[0] = not visible[0]
+        if visible[0]:
+            root.after(0, root.deiconify)
+        else:
+            root.after(0, root.withdraw)
+
+    setup_global_hotkey(toggle_visibility)
 
     def on_result(text: str, is_final: bool) -> None:
-        # Only enqueue — never call tkinter from the ObjC callback thread
         result_queue.put((text, is_final))
 
     def poll() -> None:
