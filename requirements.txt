@@ -1,0 +1,2 @@
+pyobjc-framework-Speech==10.3.1
+pyobjc-framework-AVFoundation==10.3.1
