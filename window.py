@@ -28,6 +28,8 @@ class SubtitleWindow:
         root.geometry(f"{CANVAS_W}x{CANVAS_H}+100+760")
         root.configure(bg=COLORS["bg"])
         root.wm_attributes("-topmost", True)
+        self._alpha = 0.85
+        root.wm_attributes("-alpha", self._alpha)
         try:
             root.overrideredirect(True)
         except Exception:
@@ -37,6 +39,9 @@ class SubtitleWindow:
         self._drag_y = 0
         root.bind("<ButtonPress-1>", self._drag_start)
         root.bind("<B1-Motion>", self._drag_move)
+        # ⌘= / ⌘- to adjust opacity
+        root.bind("<Command-equal>", lambda _: self._adjust_alpha(0.1))
+        root.bind("<Command-minus>", lambda _: self._adjust_alpha(-0.1))
 
         self._canvas = tk.Canvas(root, width=CANVAS_W, height=CANVAS_H,
                                  bg=COLORS["bg"], highlightthickness=0, bd=0)
@@ -86,6 +91,10 @@ class SubtitleWindow:
             self._partial_id,
             text=("▋  " + partial) if partial else ""
         )
+
+    def _adjust_alpha(self, delta: float) -> None:
+        self._alpha = max(0.2, min(1.0, self._alpha + delta))
+        self.root.wm_attributes("-alpha", self._alpha)
 
     def _drag_start(self, event):
         self._drag_x = event.x
