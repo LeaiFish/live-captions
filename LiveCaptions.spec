@@ -52,6 +52,6 @@ app = BUNDLE(
             'Live Captions needs microphone access to transcribe speech in real time.',
         'NSSpeechRecognitionUsageDescription':
             'Live Captions uses speech recognition to display real-time captions.',
-        'NSHumanReadableCopyright':   '© 2026 Lea (Junyi Xu). MIT License.',
+        'NSHumanReadableCopyright':   '© 2026 LeaiFish. MIT License.',
     },
 )
