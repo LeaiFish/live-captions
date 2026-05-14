@@ -20,8 +20,8 @@ FONT_SIZE_MAX = 24
 
 CANVAS_W   = 420
 CANVAS_H   = 168
-WRAP_W     = 376
-PAD_X      = 22
+WRAP_W     = 370
+PAD_X      = 26
 BAR_X      = 14
 TITLEBAR_H = 28
 
@@ -98,9 +98,9 @@ class SubtitleWindow:
         )
 
         # ── Highlight background + accent bar ──────────────────────────
-        hl_y1, hl_y2 = SLOTS_Y[2] - 28, SLOTS_Y[2] + 10
+        hl_y1, hl_y2 = SLOTS_Y[2] - 28, SLOTS_Y[2] + 8
         self._hl_rect = self._canvas.create_rectangle(
-            BAR_X + 4, hl_y1, CANVAS_W - 8, hl_y2,
+            BAR_X + 4, hl_y1, CANVAS_W - 12, hl_y2,
             fill=COLORS["bg"], outline=""
         )
         self._bar = self._canvas.create_rectangle(
@@ -222,9 +222,9 @@ class SubtitleWindow:
             bbox = self._canvas.bbox(self._line_ids[2])
             if bbox:
                 x1, y1, x2, y2 = bbox
-                pad = 10
+                pad = 8
                 self._canvas.coords(self._hl_rect,
-                                    BAR_X + 4, y1 - pad, CANVAS_W - 8, y2 + pad)
+                                    BAR_X + 4, y1 - pad, CANVAS_W - 12, y2 + pad)
                 self._canvas.coords(self._bar,
                                     BAR_X, y1 - pad, BAR_X + 4, y2 + pad)
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["hl_bg"])
