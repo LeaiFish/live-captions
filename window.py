@@ -3,8 +3,8 @@ import tkinter as tk
 
 COLORS = {
     "bg":      "#0f0f14",
-    "old":     "#606070",
-    "mid":     "#a8a8b8",
+    "old":     "#9090a0",
+    "mid":     "#c0c0cc",
     "current": "#ffffff",
     "accent":  "#6c8eff",
     "cursor":  "#8aabff",
