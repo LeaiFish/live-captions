@@ -222,11 +222,12 @@ class SubtitleWindow:
             bbox = self._canvas.bbox(self._line_ids[2])
             if bbox:
                 x1, y1, x2, y2 = bbox
-                pad = 8
+                hl_top = max(y1 - 8, SLOTS_Y[1] + 6)
+                hl_bot = y2 + 8
                 self._canvas.coords(self._hl_rect,
-                                    BAR_X + 4, y1 - pad, CANVAS_W - 12, y2 + pad)
+                                    BAR_X + 4, hl_top, CANVAS_W - 12, hl_bot)
                 self._canvas.coords(self._bar,
-                                    BAR_X, y1 - pad, BAR_X + 4, y2 + pad)
+                                    BAR_X, hl_top, BAR_X + 4, hl_bot)
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["hl_bg"])
             self._canvas.itemconfigure(self._bar,     fill=COLORS["accent"])
         else:
