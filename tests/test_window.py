@@ -16,3 +16,7 @@ def test_render_updates_without_error(root):
     w = SubtitleWindow(root)
     w.render(lines=["first.", "second."], partial="in prog")
     root.update_idletasks()
+
+def test_recognizer_imports():
+    from recognizer import Recognizer
+    assert Recognizer is not None
