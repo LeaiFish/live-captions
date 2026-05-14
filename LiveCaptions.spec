@@ -40,7 +40,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='Live Captions.app',
-    icon=None,
+    icon='assets/AppIcon.icns',
     bundle_identifier='com.leaifi.live-captions',
     version='1.1.0',
     info_plist={
