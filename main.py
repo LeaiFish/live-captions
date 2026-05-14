@@ -10,11 +10,11 @@ def main():
     window = SubtitleWindow(root)
 
     def on_result(text: str, is_final: bool) -> None:
-        history.update(text, is_final)
-        data = history.display()
-        root.after(0, lambda: window.render(
-            lines=data["lines"], partial=data["partial"]
-        ))
+        def _update():
+            history.update(text, is_final)
+            d = history.display()
+            window.render(lines=d["lines"], partial=d["partial"])
+        root.after(0, _update)
 
     recognizer = Recognizer(on_result=on_result)
     recognizer.start()
