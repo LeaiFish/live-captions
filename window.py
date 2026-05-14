@@ -8,8 +8,9 @@ COLORS = {
     "accent": "#6c8eff",
     "cursor": "#6c8eff",
 }
-FONT_SMALL = ("System", 12)
-FONT_CURSOR = ("System", 13)
+FONT_SIZE_DEFAULT = 12
+FONT_SIZE_MIN = 10
+FONT_SIZE_MAX = 24
 
 CANVAS_W = 460
 CANVAS_H = 200
@@ -37,11 +38,15 @@ class SubtitleWindow:
 
         self._drag_x = 0
         self._drag_y = 0
+        self._font_size = FONT_SIZE_DEFAULT
         root.bind("<ButtonPress-1>", self._drag_start)
         root.bind("<B1-Motion>", self._drag_move)
         # ⌘= / ⌘- to adjust opacity
         root.bind("<Command-equal>", lambda _: self._adjust_alpha(0.1))
         root.bind("<Command-minus>", lambda _: self._adjust_alpha(-0.1))
+        # ⌘↑ / ⌘↓ to adjust font size
+        root.bind("<Command-Up>", lambda _: self._adjust_font(2))
+        root.bind("<Command-Down>", lambda _: self._adjust_font(-2))
 
         self._canvas = tk.Canvas(root, width=CANVAS_W, height=CANVAS_H,
                                  bg=COLORS["bg"], highlightthickness=0, bd=0)
@@ -58,7 +63,7 @@ class SubtitleWindow:
         self._line_ids = [
             self._canvas.create_text(PAD_X, SLOTS_Y[i], text="",
                                      width=WRAP_W, fill=line_colors[i],
-                                     font=FONT_SMALL, anchor="sw")
+                                     font=("System", self._font_size), anchor="sw")
             for i in range(3)
         ]
 
@@ -71,7 +76,7 @@ class SubtitleWindow:
         # Partial / cursor text
         self._partial_id = self._canvas.create_text(
             PAD_X, PARTIAL_Y, text="", width=WRAP_W,
-            fill=COLORS["cursor"], font=FONT_CURSOR, anchor="sw"
+            fill=COLORS["cursor"], font=("System", self._font_size + 1), anchor="sw"
         )
 
     def render(self, lines: list[str], partial: str) -> None:
@@ -91,6 +96,14 @@ class SubtitleWindow:
             self._partial_id,
             text=("▋  " + partial) if partial else ""
         )
+
+    def _adjust_font(self, delta: int) -> None:
+        self._font_size = max(FONT_SIZE_MIN, min(FONT_SIZE_MAX, self._font_size + delta))
+        font = ("System", self._font_size)
+        font_cursor = ("System", self._font_size + 1)
+        for lid in self._line_ids:
+            self._canvas.itemconfigure(lid, font=font)
+        self._canvas.itemconfigure(self._partial_id, font=font_cursor)
 
     def _adjust_alpha(self, delta: float) -> None:
         self._alpha = max(0.2, min(1.0, self._alpha + delta))
