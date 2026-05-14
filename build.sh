@@ -41,4 +41,8 @@ PYEOF
 echo "==> Copying AppIcon.icns into Resources..."
 cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
+echo "==> Re-signing with patched Info.plist..."
+codesign --force --sign - "$APP/Contents/MacOS/Live Captions"
+codesign --force --sign - "$APP"
+
 echo "==> Done. Built: $APP"
