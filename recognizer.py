@@ -57,24 +57,28 @@ class Recognizer:
             raise RuntimeError(f"AVAudioEngine failed to start: {e}") from e
 
     def _begin_task(self) -> None:
-        self._request = Speech.SFSpeechAudioBufferRecognitionRequest.alloc().init()
-        self._request.setShouldReportPartialResults_(True)
+        request = Speech.SFSpeechAudioBufferRecognitionRequest.alloc().init()
+        request.setShouldReportPartialResults_(True)
         try:
-            self._request.setAddsPunctuation_(True)
+            request.setAddsPunctuation_(True)
         except Exception:
             pass  # macOS <13 fallback
+        self._request = request
+
+        on_result = self._on_result
 
         def handle_result(result, error):
-            if error is not None:
-                print(f"[Recognizer] Recognition error: {error}", file=sys.stderr)
+            # Drop callbacks from a cancelled task (request identity check).
+            if request is not self._request:
+                return
             if result is None:
                 return
             text = result.bestTranscription().formattedString()
             is_final = result.isFinal()
-            self._on_result(text, is_final)
+            on_result(text, is_final)
 
         self._task = self._sf_recognizer.recognitionTaskWithRequest_resultHandler_(
-            self._request, handle_result
+            request, handle_result
         )
 
     def restart_task(self) -> None:

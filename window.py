@@ -244,8 +244,8 @@ class SubtitleWindow:
             bbox = self._canvas.bbox(self._line_ids[2])
             if bbox:
                 x1, y1, x2, y2 = bbox
-                hl_top = max(y1 - 8, SLOTS_Y[1] + 10)
-                hl_bot = y2 + 8
+                hl_top = max(y1 - 10, SLOTS_Y[1] + 4)
+                hl_bot = y2 + 14
                 self._canvas.coords(self._hl_rect,
                                     BAR_X + 4, hl_top, CANVAS_W - 12, hl_bot)
                 self._canvas.coords(self._bar,
