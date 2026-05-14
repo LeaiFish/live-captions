@@ -239,13 +239,23 @@ class SubtitleWindow:
         self._canvas.itemconfigure(self._line_ids[2],
                                    text=partial, fill=COLORS["cursor"])
 
+        GAP = 6
+        self.root.update_idletasks()
+
         if partial:
-            self.root.update_idletasks()
-            bbox = self._canvas.bbox(self._line_ids[2])
-            if bbox:
-                x1, y1, x2, y2 = bbox
-                hl_top = max(y1 - 10, SLOTS_Y[1] + 4)
-                hl_bot = y2 + 14
+            bbox2 = self._canvas.bbox(self._line_ids[2])
+            if bbox2:
+                _, p_y1, _, p_y2 = bbox2
+
+                # Slot 1 bottom = just above partial top
+                self._canvas.coords(self._line_ids[1], PAD_X, p_y1 - GAP)
+                self.root.update_idletasks()
+                bbox1 = self._canvas.bbox(self._line_ids[1])
+                if bbox1:
+                    self._canvas.coords(self._line_ids[0], PAD_X, bbox1[1] - GAP)
+
+                hl_top = p_y1 - 10
+                hl_bot = p_y2 + 14
                 self._canvas.coords(self._hl_rect,
                                     BAR_X + 4, hl_top, CANVAS_W - 12, hl_bot)
                 self._canvas.coords(self._bar,
@@ -253,6 +263,15 @@ class SubtitleWindow:
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["hl_bg"])
             self._canvas.itemconfigure(self._bar,     fill=COLORS["accent"])
         else:
+            # No partial: slot 1 anchors at the bottom, slot 0 dynamically above it
+            self._canvas.coords(self._line_ids[1], PAD_X, SLOTS_Y[2])
+            self._canvas.coords(self._line_ids[2], PAD_X, SLOTS_Y[2])
+            self.root.update_idletasks()
+            bbox1 = self._canvas.bbox(self._line_ids[1])
+            if bbox1:
+                self._canvas.coords(self._line_ids[0], PAD_X, bbox1[1] - GAP)
+            else:
+                self._canvas.coords(self._line_ids[0], PAD_X, SLOTS_Y[0])
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["bg"])
             self._canvas.itemconfigure(self._bar,     fill=COLORS["bg"])
 
