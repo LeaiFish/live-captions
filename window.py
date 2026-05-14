@@ -254,8 +254,8 @@ class SubtitleWindow:
                 if bbox1:
                     self._canvas.coords(self._line_ids[0], PAD_X, bbox1[1] - GAP)
 
-                hl_top = p_y1 - 10
-                hl_bot = p_y2 + 14
+                hl_top = p_y1 - 4
+                hl_bot = p_y2 + 4
                 self._canvas.coords(self._hl_rect,
                                     BAR_X + 4, hl_top, CANVAS_W - 12, hl_bot)
                 self._canvas.coords(self._bar,
