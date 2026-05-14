@@ -12,20 +12,26 @@ NSCommandKeyMask = 1 << 20
 NSShiftKeyMask = 1 << 17
 
 
-def setup_global_hotkey(callback):
-    """Listen for ⌘⇧H globally to toggle window visibility."""
+def setup_global_hotkeys(on_toggle: callable, on_copy: callable) -> None:
+    """
+    ⌘⇧H — toggle window visibility
+    ⌘⇧C — copy last sentence to clipboard
+    """
     try:
         from AppKit import NSEvent
 
         def handler(event):
             flags = event.modifierFlags()
             chars = event.charactersIgnoringModifiers()
-            if (flags & NSCommandKeyMask) and (flags & NSShiftKeyMask) and chars == "h":
-                callback()
+            if (flags & NSCommandKeyMask) and (flags & NSShiftKeyMask):
+                if chars == "h":
+                    on_toggle()
+                elif chars == "c":
+                    on_copy()
 
         NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(NSKeyDownMask, handler)
     except Exception as e:
-        print(f"[Hotkey] Could not register global hotkey: {e}")
+        print(f"[Hotkey] Could not register global hotkeys: {e}")
 
 
 def main():
@@ -44,7 +50,14 @@ def main():
         else:
             root.after(0, root.withdraw)
 
-    setup_global_hotkey(toggle_visibility)
+    def copy_last_sentence() -> None:
+        if transcript:
+            root.after(0, lambda: (
+                root.clipboard_clear(),
+                root.clipboard_append(transcript[-1])
+            ))
+
+    setup_global_hotkeys(toggle_visibility, copy_last_sentence)
 
     def save_transcript() -> None:
         if not transcript:
