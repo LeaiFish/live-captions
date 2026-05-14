@@ -19,13 +19,13 @@ FONT_SIZE_MIN = 10
 FONT_SIZE_MAX = 24
 
 CANVAS_W   = 420
-CANVAS_H   = 158
+CANVAS_H   = 148
 WRAP_W     = 370
 PAD_X      = 26
 BAR_X      = 14
 TITLEBAR_H = 28
 
-SLOTS_Y = [88, 110, 145]
+SLOTS_Y = [84, 106, 130]
 
 SCROLL_RESUME_MS = 3000  # ms of inactivity before returning to live mode
 
