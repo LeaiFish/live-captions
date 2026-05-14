@@ -203,21 +203,14 @@ class SubtitleWindow:
         if self._scroll_offset > 0:
             return
 
-        # slot 2 = partial while speaking, else most recent confirmed line
-        if partial:
-            current = partial
-            current_color = COLORS["cursor"]
-            history = ([""] * 2 + list(lines))[-2:]
-        else:
-            current = lines[-1] if lines else ""
-            current_color = COLORS["current"]
-            history = ([""] * 2 + list(lines[:-1] if lines else []))[-2:]
-
+        # slot 2 = partial only; confirmed lines stay in slots 0-1
+        history = ([""] * 2 + list(lines))[-2:]
         self._canvas.itemconfigure(self._line_ids[0], text=history[0], fill=COLORS["old"])
         self._canvas.itemconfigure(self._line_ids[1], text=history[1], fill=COLORS["mid"])
-        self._canvas.itemconfigure(self._line_ids[2], text=current,    fill=current_color)
+        self._canvas.itemconfigure(self._line_ids[2],
+                                   text=partial, fill=COLORS["cursor"])
 
-        if current:
+        if partial:
             self.root.update_idletasks()
             bbox = self._canvas.bbox(self._line_ids[2])
             if bbox:

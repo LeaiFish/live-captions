@@ -21,17 +21,18 @@ def test_partial_in_slot2_while_speaking(root):
     w = SubtitleWindow(root)
     w.render(lines=["confirmed sentence."], partial="still speaking")
     root.update_idletasks()
-    # Partial goes in slot 2 (highlighted) while speaking
+    # Partial in slot 2 while speaking
     assert w._canvas.itemcget(w._line_ids[2], "text") == "still speaking"
-    # Confirmed line moves to slot 1
+    # Confirmed line in slot 1
     assert w._canvas.itemcget(w._line_ids[1], "text") == "confirmed sentence."
 
-def test_confirmed_line_in_slot2_when_silent(root):
+def test_slot2_empty_when_silent(root):
     w = SubtitleWindow(root)
     w.render(lines=["confirmed sentence."], partial="")
     root.update_idletasks()
-    # Last confirmed line shown in slot 2 when not speaking
-    assert w._canvas.itemcget(w._line_ids[2], "text") == "confirmed sentence."
+    # Slot 2 empty when not speaking — confirmed lines only in history slots
+    assert w._canvas.itemcget(w._line_ids[2], "text") == ""
+    assert w._canvas.itemcget(w._line_ids[1], "text") == "confirmed sentence."
 
 def test_recognizer_imports():
     from recognizer import Recognizer
