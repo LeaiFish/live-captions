@@ -23,8 +23,8 @@ def make_icon(size):
     W65  = hex_rgba('#ffffff', int(0.65 * 255))
     FILL = hex_rgba('#1a1a2e')   # bubble fill: dark navy
 
-    # Rounded background — macOS standard corner radius ~175/1024 ≈ 22.5%
-    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=S(28), fill=BG)
+    # Full-bleed opaque square — macOS Dock clips all icons to rounded square itself
+    d.rectangle([0, 0, size - 1, size - 1], fill=BG)
 
     # Speech bubble fill
     d.rounded_rectangle([S(10), S(26), S(10) + S(94), S(26) + S(66)],
