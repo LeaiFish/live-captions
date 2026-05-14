@@ -16,13 +16,13 @@ class SubtitleWindow:
     def __init__(self, root: tk.Tk):
         self.root = root
         root.title("Live Captions")
-        root.geometry("460x170+100+900")
+        root.geometry("460x200+100+760")
         root.configure(bg=COLORS["bg"])
         root.wm_attributes("-topmost", True)
         try:
-            root.overrideredirect(True)  # remove title bar
+            root.overrideredirect(True)
         except Exception:
-            pass  # can fail in test environments with recycled Tk instances
+            pass
 
         self._drag_x = 0
         self._drag_y = 0
@@ -39,41 +39,43 @@ class SubtitleWindow:
         self._frame = tk.Frame(root, bg=COLORS["bg"])
         self._frame.pack(fill="both", expand=True, padx=14, pady=(24, 10))
 
-        self._labels: list[tk.Label] = []
+        self._texts: list[tk.Text] = []
         self._accent: list[tk.Frame] = []
-        for _ in range(3):  # old, mid, current
+        for _ in range(3):
             row = tk.Frame(self._frame, bg=COLORS["bg"])
             row.pack(fill="x", pady=2)
             bar = tk.Frame(row, width=3, bg=COLORS["bg"])
             bar.pack(side="left", fill="y", padx=(0, 6))
-            lbl = tk.Label(row, text="", bg=COLORS["bg"], fg=COLORS["old"],
-                           font=FONT_SMALL, anchor="w", wraplength=400,
-                           justify="left")
-            lbl.pack(side="left", fill="x", expand=True)
-            self._labels.append(lbl)
+            txt = tk.Text(row, height=1, wrap="word",
+                          bg=COLORS["bg"], fg=COLORS["old"],
+                          font=FONT_SMALL, bd=0, highlightthickness=0,
+                          relief="flat", state="disabled", cursor="arrow")
+            txt.pack(side="left", fill="x", expand=True)
+            self._texts.append(txt)
             self._accent.append(bar)
 
         self._cursor_label = tk.Label(self._frame, text="", bg=COLORS["bg"],
                                       fg=COLORS["cursor"], font=FONT, anchor="w")
         self._cursor_label.pack(fill="x", padx=(9, 0))
 
-        # Update wraplength whenever the window is resized
-        root.bind("<Configure>", self._on_resize)
-
-    def _on_resize(self, event) -> None:
-        wrap = max(100, self.root.winfo_width() - 50)
-        for lbl in self._labels:
-            lbl.configure(wraplength=wrap)
+    def _set_text(self, txt: tk.Text, content: str, color: str) -> None:
+        txt.configure(state="normal", fg=color)
+        txt.delete("1.0", "end")
+        if content:
+            txt.insert("1.0", content)
+            # Adjust height to fit wrapped content
+            txt.configure(height=max(1, int(txt.index("end-1c").split(".")[0])))
+        else:
+            txt.configure(height=1)
+        txt.configure(state="disabled")
 
     def render(self, lines: list[str], partial: str) -> None:
         color_map = [COLORS["old"], COLORS["mid"], COLORS["current"]]
-        # Pad lines to always fill 3 slots
         padded = ([""] * (3 - len(lines)) + lines)[-3:]
-        for i, (lbl, bar, text) in enumerate(zip(self._labels, self._accent, padded)):
-            lbl.configure(text=text, fg=color_map[i])
+        for i, (txt, bar, text) in enumerate(zip(self._texts, self._accent, padded)):
+            self._set_text(txt, text, color_map[i])
             is_current = (i == 2 and text)
             bar.configure(bg=COLORS["accent"] if is_current else COLORS["bg"])
-        # partial shows in the cursor row, not overwriting the last confirmed line
         self._cursor_label.configure(text=("▋  " + partial) if partial else "")
 
     def _drag_start(self, event):
