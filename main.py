@@ -58,6 +58,7 @@ def main():
             ))
 
     setup_global_hotkeys(toggle_visibility, copy_last_sentence)
+    window.set_callbacks(on_toggle=toggle_visibility, on_copy=copy_last_sentence)
 
     def save_transcript() -> None:
         if not transcript:

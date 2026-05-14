@@ -47,6 +47,10 @@ class SubtitleWindow:
         # ⌘↑ / ⌘↓ to adjust font size
         root.bind("<Command-Up>", lambda _: self._adjust_font(2))
         root.bind("<Command-Down>", lambda _: self._adjust_font(-2))
+        # Right-click menu
+        root.bind("<Button-2>", self._show_menu)
+        root.bind("<Button-3>", self._show_menu)
+        root.bind("<Control-Button-1>", self._show_menu)
 
         self._canvas = tk.Canvas(root, width=CANVAS_W, height=CANVAS_H,
                                  bg=COLORS["bg"], highlightthickness=0, bd=0)
@@ -96,6 +100,33 @@ class SubtitleWindow:
             self._partial_id,
             text=("▋  " + partial) if partial else ""
         )
+
+    def set_callbacks(self, on_toggle: callable, on_copy: callable) -> None:
+        self._on_toggle = on_toggle
+        self._on_copy = on_copy
+
+    def _show_menu(self, event) -> None:
+        menu = tk.Menu(self.root, tearoff=0,
+                       bg="#1a1a2e", fg="#ffffff",
+                       activebackground=COLORS["accent"],
+                       activeforeground="#ffffff",
+                       font=("System", 12))
+        menu.add_command(label="Font Larger  ⌘↑", command=lambda: self._adjust_font(2))
+        menu.add_command(label="Font Smaller  ⌘↓", command=lambda: self._adjust_font(-2))
+        menu.add_separator()
+        menu.add_command(label="More Opaque  ⌘=", command=lambda: self._adjust_alpha(0.1))
+        menu.add_command(label="Less Opaque  ⌘-", command=lambda: self._adjust_alpha(-0.1))
+        menu.add_separator()
+        if hasattr(self, "_on_copy"):
+            menu.add_command(label="Copy Last Sentence  ⌘⇧C", command=self._on_copy)
+            menu.add_separator()
+        if hasattr(self, "_on_toggle"):
+            menu.add_command(label="Hide Window  ⌘⇧H", command=self._on_toggle)
+        menu.add_command(label="Quit", command=self.root.destroy)
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
 
     def _adjust_font(self, delta: int) -> None:
         self._font_size = max(FONT_SIZE_MIN, min(FONT_SIZE_MAX, self._font_size + delta))
