@@ -78,8 +78,8 @@ class SubtitleWindow:
                                  fill="#3f3f50", font=("System", 10),
                                  anchor="center")
 
-        # ── Current-line highlight background + accent bar ─────────────
-        hl_y1, hl_y2 = SLOTS_Y[2] - 44, SLOTS_Y[2] + 6
+        # ── All-lines highlight background + accent bar ────────────────
+        hl_y1, hl_y2 = SLOTS_Y[0] - 20, SLOTS_Y[2] + 6
         self._hl_rect = self._canvas.create_rectangle(
             BAR_X + 3, hl_y1, CANVAS_W - 10, hl_y2,
             fill=COLORS["bg"], outline=""
@@ -117,17 +117,23 @@ class SubtitleWindow:
         for i, (text, color) in enumerate(zip(padded, line_colors)):
             self._canvas.itemconfigure(self._line_ids[i], text=text, fill=color)
 
-        # Resize highlight to match actual text bbox
-        if padded[2]:
-            self.root.update_idletasks()
-            bbox = self._canvas.bbox(self._line_ids[2])
-            if bbox:
-                x1, y1, x2, y2 = bbox
-                pad = 6
-                self._canvas.coords(self._hl_rect,
-                                    BAR_X + 3, y1 - pad, CANVAS_W - 10, y2 + pad)
-                self._canvas.coords(self._bar,
-                                    BAR_X, y1 - pad, BAR_X + 3, y2 + pad)
+        # Resize highlight to span all non-empty lines
+        self.root.update_idletasks()
+        top_bbox, bot_bbox = None, None
+        for i in range(3):
+            if padded[i]:
+                b = self._canvas.bbox(self._line_ids[i])
+                if b:
+                    if top_bbox is None:
+                        top_bbox = b
+                    bot_bbox = b
+
+        if bot_bbox:
+            pad = 6
+            y1 = (top_bbox[1] if top_bbox else bot_bbox[1]) - pad
+            y2 = bot_bbox[3] + pad
+            self._canvas.coords(self._hl_rect, BAR_X + 3, y1, CANVAS_W - 10, y2)
+            self._canvas.coords(self._bar,     BAR_X,     y1, BAR_X + 3,     y2)
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["hl_bg"])
             self._canvas.itemconfigure(self._bar,     fill=COLORS["accent"])
         else:
