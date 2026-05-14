@@ -121,11 +121,20 @@ def main():
     def save_transcript() -> None:
         if not transcript:
             return
-        out_dir = Path.home() / "Documents" / "captions"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        out_file = out_dir / f"{session_start}.txt"
-        out_file.write_text("\n".join(transcript), encoding="utf-8")
-        print(f"[Transcript] Saved to {out_file}")
+        from tkinter import filedialog
+        default_name = f"captions-{session_start}.txt"
+        default_dir = str(Path.home() / "Documents")
+        path = filedialog.asksaveasfilename(
+            title="Save transcript",
+            initialfile=default_name,
+            initialdir=default_dir,
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        Path(path).write_text("\n".join(transcript), encoding="utf-8")
+        print(f"[Transcript] Saved to {path}")
 
     last_partial: list[str]   = [""]
     last_partial_t: list[float] = [0.0]
