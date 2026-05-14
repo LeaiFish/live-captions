@@ -52,6 +52,8 @@ class SubtitleWindow:
         self._all_lines: list[str] = []
         self._scroll_offset = 0      # 0 = live; N = N lines back from end
         self._scroll_timer  = None   # after() ID for auto-resume
+        self._last_lines:   list[str] = []
+        self._last_partial: str = ""
 
         root.bind("<ButtonPress-1>", self._drag_start)
         root.bind("<B1-Motion>", self._drag_move)
@@ -164,6 +166,8 @@ class SubtitleWindow:
         self._scroll_offset = 0
         self._scroll_timer  = None
         self._canvas.itemconfigure(self._scroll_label, text="")
+        # Force immediate redraw so stale history content doesn't linger
+        self.render(self._last_lines, self._last_partial)
 
     # ── Public API ─────────────────────────────────────────────────────
 
@@ -192,6 +196,8 @@ class SubtitleWindow:
     def render(self, lines: list[str], partial: str, all_lines: list[str] | None = None) -> None:
         if all_lines is not None:
             self._all_lines = all_lines
+        self._last_lines   = lines
+        self._last_partial = partial
 
         # Don't overwrite display while user is scrolling history
         if self._scroll_offset > 0:
