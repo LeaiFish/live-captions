@@ -72,6 +72,7 @@ def main():
         history.partial = ""
         last_partial[0] = ""
         last_partial_t[0] = 0.0
+        recognized_prefix[0] = ""
         if recognizer_ref:
             recognizer_ref[0].stop()
         new_rec = Recognizer(on_result=on_result, locale=locale)
@@ -94,11 +95,24 @@ def main():
 
     last_partial: list[str]   = [""]
     last_partial_t: list[float] = [0.0]
+    # Cumulative text already committed to history in the current recognizer session.
+    # SFSpeechRecognizer never resets its buffer mid-task, so we strip this prefix
+    # from every incoming result to avoid showing already-finalized sentences again.
+    recognized_prefix: list[str] = [""]
+    _running = [True]
 
     def on_result(text: str, is_final: bool) -> None:
+        prefix = recognized_prefix[0]
+        if prefix and text.startswith(prefix):
+            text = text[len(prefix):].lstrip()
+        if is_final:
+            # The recognizer task ended naturally; next task starts fresh.
+            recognized_prefix[0] = ""
         result_queue.put((text, is_final))
 
     def poll() -> None:
+        if not _running[0]:
+            return
         try:
             while True:
                 text, is_final = result_queue.get_nowait()
@@ -123,6 +137,7 @@ def main():
             text = last_partial[0]
             last_partial[0] = ""
             last_partial_t[0] = 0.0
+            recognized_prefix[0] = (recognized_prefix[0] + " " + text).lstrip() + " "
             history.update(text, is_final=True)
             transcript.append(text)
             d = history.display()
@@ -136,6 +151,7 @@ def main():
     root.after(50, poll)
 
     def on_close():
+        _running[0] = False
         recognizer_ref[0].stop()
         if transcript:
             from tkinter import messagebox
