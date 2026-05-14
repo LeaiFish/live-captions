@@ -100,9 +100,22 @@ def main():
         new_rec.start()
         recognizer_ref[0] = new_rec
 
+    transcribing = [True]
+
+    def toggle_transcription() -> None:
+        if transcribing[0]:
+            recognizer_ref[0].pause()
+            transcribing[0] = False
+            root.after(0, lambda: window.set_transcribing(False))
+        else:
+            recognizer_ref[0].resume()
+            transcribing[0] = True
+            root.after(0, lambda: window.set_transcribing(True))
+
     setup_global_hotkeys(toggle_visibility, copy_last_sentence)
     window.set_callbacks(on_toggle=toggle_visibility, on_copy=copy_last_sentence,
-                         on_lang=switch_lang, on_quit=lambda: on_close())
+                         on_lang=switch_lang, on_quit=lambda: on_close(),
+                         on_transcribe=toggle_transcription)
     window.set_lang_label("EN")
 
     def save_transcript() -> None:

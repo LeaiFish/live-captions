@@ -63,6 +63,7 @@ class SubtitleWindow:
         root.bind("<Command-Up>",    lambda _: self._adjust_font(2))
         root.bind("<Command-Down>",  lambda _: self._adjust_font(-2))
         root.bind("<Command-l>",     lambda _: self._toggle_lang())
+        root.bind("<Command-t>",     lambda _: self._toggle_transcription())
         root.bind("<Button-2>",         self._show_menu)
         root.bind("<Button-3>",         self._show_menu)
         root.bind("<Control-Button-1>", self._show_menu)
@@ -87,9 +88,19 @@ class SubtitleWindow:
             self._canvas.tag_bind(dot, "<Button-1>", action)
 
         self._canvas.create_text(CANVAS_W // 2, DOT_Y,
-                                 text="🎙 Live Captions",
+                                 text="Live Captions",
                                  fill="#3f3f50", font=("System", 10),
                                  anchor="center")
+
+        # Recording status button — click to toggle; sits left of center title
+        self._transcribing = True
+        self._rec_btn = self._canvas.create_text(
+            80, DOT_Y,
+            text="⬤ REC", fill="#ff5f56",
+            font=("System", 9, "bold"), anchor="center"
+        )
+        self._canvas.tag_bind(self._rec_btn, "<Button-1>",
+                              lambda _: self._toggle_transcription())
 
         # Language toggle button (top-right, always visible)
         self._lang_btn = self._canvas.create_text(
@@ -208,15 +219,31 @@ class SubtitleWindow:
             print(f"[Rounded] {e}", file=sys.stderr)
 
     def set_callbacks(self, on_toggle: callable, on_copy: callable,
-                      on_lang=None, on_quit=None) -> None:
+                      on_lang=None, on_quit=None, on_transcribe=None) -> None:
         self._on_toggle = on_toggle
         self._on_copy = on_copy
         self._on_lang = on_lang
         self._on_quit = on_quit
+        self._on_transcribe = on_transcribe
 
     def set_lang_label(self, label: str) -> None:
         self._lang_label = label
         self._canvas.itemconfigure(self._lang_btn, text=label)
+
+    def set_transcribing(self, active: bool) -> None:
+        self._transcribing = active
+        if active:
+            self._canvas.itemconfigure(self._rec_btn,
+                                       text="⬤ REC", fill="#ff5f56")
+        else:
+            self._canvas.itemconfigure(self._rec_btn,
+                                       text="⏸ PAUSE", fill="#606070")
+            self._canvas.itemconfigure(self._hl_rect, fill=COLORS["bg"])
+            self._canvas.itemconfigure(self._bar,     fill=COLORS["bg"])
+
+    def _toggle_transcription(self) -> None:
+        if hasattr(self, "_on_transcribe") and self._on_transcribe:
+            self._on_transcribe()
 
     def _toggle_lang(self) -> None:
         if hasattr(self, "_on_lang") and self._on_lang:
@@ -286,6 +313,11 @@ class SubtitleWindow:
         menu.add_separator()
         menu.add_command(label="More Opaque  ⌘=",  command=lambda: self._adjust_alpha(0.1))
         menu.add_command(label="Less Opaque  ⌘-",  command=lambda: self._adjust_alpha(-0.1))
+        menu.add_separator()
+        is_on = getattr(self, "_transcribing", True)
+        menu.add_command(
+            label="Pause Transcription  ⌘T" if is_on else "Resume Transcription  ⌘T",
+            command=self._toggle_transcription)
         menu.add_separator()
         if hasattr(self, "_on_lang"):
             menu.add_command(label="Switch Language  ⌘L", command=self._toggle_lang)

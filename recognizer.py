@@ -81,6 +81,28 @@ class Recognizer:
             request, handle_result
         )
 
+    def pause(self) -> None:
+        """Stop audio engine and cancel task; keeps sf_recognizer for fast resume."""
+        if self._engine:
+            self._engine.stop()
+            try:
+                self._engine.inputNode().removeTapOnBus_(0)
+            except Exception:
+                pass
+            self._engine = None
+        if self._request:
+            self._request.endAudio()
+        if self._task:
+            self._task.cancel()
+        self._request = None
+        self._task = None
+
+    def resume(self) -> None:
+        """Restart audio engine and begin a fresh recognition task."""
+        if self._sf_recognizer:
+            self._begin_engine()
+            self._begin_task()
+
     def restart_task(self) -> None:
         """Cancel current recognition task and start a fresh one on the same audio engine.
 
