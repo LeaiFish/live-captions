@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 
 COLORS = {
@@ -59,6 +60,8 @@ class SubtitleWindow:
                                  bg=COLORS["bg"], highlightthickness=0, bd=0)
         self._canvas.pack(fill="both", expand=True)
 
+        root.after(150, self._apply_rounded_corners)
+
         # ── Title bar ──────────────────────────────────────────────────
         DOT_Y, DOT_R = TITLEBAR_H // 2, 5
         for i, (color, action) in enumerate([
@@ -102,6 +105,24 @@ class SubtitleWindow:
         self._partial_id = self._canvas.create_text(
             0, 0, text="", width=0, fill=COLORS["bg"], anchor="sw"
         )
+
+    def _apply_rounded_corners(self, radius: int = 12) -> None:
+        try:
+            from AppKit import NSApplication, NSColor
+            app = NSApplication.sharedApplication()
+            for win in app.windows():
+                fr = win.frame()
+                if (abs(fr.size.width - CANVAS_W) < 10
+                        and abs(fr.size.height - CANVAS_H) < 40):
+                    win.setOpaque_(False)
+                    win.setBackgroundColor_(NSColor.clearColor())
+                    cv = win.contentView()
+                    cv.setWantsLayer_(True)
+                    cv.layer().setCornerRadius_(radius)
+                    cv.layer().setMasksToBounds_(True)
+                    return
+        except Exception as e:
+            print(f"[Rounded] {e}", file=sys.stderr)
 
     def set_callbacks(self, on_toggle: callable, on_copy: callable) -> None:
         self._on_toggle = on_toggle
