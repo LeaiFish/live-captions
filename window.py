@@ -62,6 +62,7 @@ class SubtitleWindow:
         root.bind("<Command-minus>", lambda _: self._adjust_alpha(-0.1))
         root.bind("<Command-Up>",    lambda _: self._adjust_font(2))
         root.bind("<Command-Down>",  lambda _: self._adjust_font(-2))
+        root.bind("<Command-l>",     lambda _: self._toggle_lang())
         root.bind("<Button-2>",         self._show_menu)
         root.bind("<Button-3>",         self._show_menu)
         root.bind("<Control-Button-1>", self._show_menu)
@@ -90,7 +91,22 @@ class SubtitleWindow:
                                  fill="#3f3f50", font=("System", 10),
                                  anchor="center")
 
-        # Scroll position indicator (top-right, hidden by default)
+        # Language toggle button (top-right, always visible)
+        self._lang_btn = self._canvas.create_text(
+            CANVAS_W - 12, DOT_Y,
+            text="EN", fill=COLORS["accent"],
+            font=("System", 10, "bold"), anchor="e"
+        )
+        self._canvas.tag_bind(self._lang_btn, "<Button-1>",
+                              lambda _: self._toggle_lang())
+        self._canvas.tag_bind(self._lang_btn, "<Enter>",
+                              lambda _: self._canvas.itemconfigure(
+                                  self._lang_btn, fill=COLORS["current"]))
+        self._canvas.tag_bind(self._lang_btn, "<Leave>",
+                              lambda _: self._canvas.itemconfigure(
+                                  self._lang_btn, fill=COLORS["accent"]))
+
+        # Scroll position indicator (shown during scroll, hides lang btn)
         self._scroll_label = self._canvas.create_text(
             CANVAS_W - 12, DOT_Y,
             text="", fill=COLORS["accent"],
@@ -153,9 +169,10 @@ class SubtitleWindow:
         self._canvas.itemconfigure(self._hl_rect, fill=COLORS["bg"])
         self._canvas.itemconfigure(self._bar,     fill=COLORS["bg"])
 
-        # Show position: "↑ 3 ago" etc.
-        label = f"↑ {self._scroll_offset} ago"
-        self._canvas.itemconfigure(self._scroll_label, text=label)
+        # Show scroll position, hide lang button
+        self._canvas.itemconfigure(self._scroll_label,
+                                   text=f"↑ {self._scroll_offset} ago")
+        self._canvas.itemconfigure(self._lang_btn, text="")
 
     def _reset_scroll_timer(self) -> None:
         if self._scroll_timer:
@@ -166,7 +183,8 @@ class SubtitleWindow:
         self._scroll_offset = 0
         self._scroll_timer  = None
         self._canvas.itemconfigure(self._scroll_label, text="")
-        # Force immediate redraw so stale history content doesn't linger
+        self._canvas.itemconfigure(self._lang_btn,
+                                   text=getattr(self, "_lang_label", "EN"))
         self.render(self._last_lines, self._last_partial)
 
     # ── Public API ─────────────────────────────────────────────────────
@@ -189,9 +207,19 @@ class SubtitleWindow:
         except Exception as e:
             print(f"[Rounded] {e}", file=sys.stderr)
 
-    def set_callbacks(self, on_toggle: callable, on_copy: callable) -> None:
+    def set_callbacks(self, on_toggle: callable, on_copy: callable,
+                      on_lang=None) -> None:
         self._on_toggle = on_toggle
         self._on_copy = on_copy
+        self._on_lang = on_lang
+
+    def set_lang_label(self, label: str) -> None:
+        self._lang_label = label
+        self._canvas.itemconfigure(self._lang_btn, text=label)
+
+    def _toggle_lang(self) -> None:
+        if hasattr(self, "_on_lang") and self._on_lang:
+            self._on_lang()
 
     def render(self, lines: list[str], partial: str, all_lines: list[str] | None = None) -> None:
         if all_lines is not None:
@@ -239,6 +267,9 @@ class SubtitleWindow:
         menu.add_command(label="More Opaque  ⌘=",  command=lambda: self._adjust_alpha(0.1))
         menu.add_command(label="Less Opaque  ⌘-",  command=lambda: self._adjust_alpha(-0.1))
         menu.add_separator()
+        if hasattr(self, "_on_lang"):
+            menu.add_command(label="Switch Language  ⌘L", command=self._toggle_lang)
+            menu.add_separator()
         if hasattr(self, "_on_copy"):
             menu.add_command(label="Copy Last Sentence  ⌘⇧C", command=self._on_copy)
             menu.add_separator()

@@ -60,8 +60,28 @@ def main():
                 root.clipboard_append(transcript[-1])
             ))
 
+    LANGS = [("en-US", "EN"), ("zh-CN", "中")]
+    lang_idx = [0]
+    recognizer_ref: list = []
+
+    def switch_lang() -> None:
+        lang_idx[0] = (lang_idx[0] + 1) % len(LANGS)
+        locale, label = LANGS[lang_idx[0]]
+        window.set_lang_label(label)
+        history.lines.clear()
+        history.partial = ""
+        last_partial[0] = ""
+        last_partial_t[0] = 0.0
+        if recognizer_ref:
+            recognizer_ref[0].stop()
+        new_rec = Recognizer(on_result=on_result, locale=locale)
+        new_rec.start()
+        recognizer_ref[0] = new_rec
+
     setup_global_hotkeys(toggle_visibility, copy_last_sentence)
-    window.set_callbacks(on_toggle=toggle_visibility, on_copy=copy_last_sentence)
+    window.set_callbacks(on_toggle=toggle_visibility, on_copy=copy_last_sentence,
+                         on_lang=switch_lang)
+    window.set_lang_label("EN")
 
     def save_transcript() -> None:
         if not transcript:
@@ -112,10 +132,11 @@ def main():
 
     recognizer = Recognizer(on_result=on_result)
     recognizer.start()
+    recognizer_ref.append(recognizer)
     root.after(50, poll)
 
     def on_close():
-        recognizer.stop()
+        recognizer_ref[0].stop()
         if transcript:
             from tkinter import messagebox
             if messagebox.askyesno("Save transcript?",
