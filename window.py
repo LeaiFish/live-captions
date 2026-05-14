@@ -35,9 +35,10 @@ class SubtitleWindow:
         close.place(relx=1.0, x=-12, y=4, anchor="ne")
         close.bind("<Button-1>", lambda _: root.destroy())
 
-        # Label area
+        # Label area — pack_propagate(False) prevents children from expanding the frame
         self._frame = tk.Frame(root, bg=COLORS["bg"])
         self._frame.pack(fill="both", expand=True, padx=14, pady=(24, 10))
+        self._frame.pack_propagate(False)
 
         self._texts: list[tk.Text] = []
         self._accent: list[tk.Frame] = []
@@ -46,7 +47,7 @@ class SubtitleWindow:
             row.pack(fill="x", pady=2)
             bar = tk.Frame(row, width=3, bg=COLORS["bg"])
             bar.pack(side="left", fill="y", padx=(0, 6))
-            txt = tk.Text(row, height=1, wrap="word",
+            txt = tk.Text(row, height=2, width=1, wrap="word",
                           bg=COLORS["bg"], fg=COLORS["old"],
                           font=FONT_SMALL, bd=0, highlightthickness=0,
                           relief="flat", state="disabled", cursor="arrow")
