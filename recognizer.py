@@ -1,4 +1,3 @@
-import threading
 from typing import Callable
 
 import AVFoundation
@@ -33,7 +32,9 @@ class Recognizer:
     def _on_authorized(self, status) -> None:
         # SFSpeechRecognizerAuthorizationStatusAuthorized == 3
         if status != 3:
-            raise RuntimeError(f"Microphone/speech permission denied (status={status}).")
+            import sys
+            print(f"[Recognizer] Permission denied (status={status}). Grant access in System Settings > Privacy > Speech Recognition.", file=sys.stderr)
+            return
         self._begin(Speech.SFSpeechRecognizer.alloc().initWithLocale_(
             Speech.NSLocale.alloc().initWithLocaleIdentifier_(self._locale)
         ))
@@ -47,6 +48,9 @@ class Recognizer:
         self._request.setShouldReportPartialResults_(True)
 
         def handle_result(result, error):
+            if error is not None:
+                import sys
+                print(f"[Recognizer] Recognition error: {error}", file=sys.stderr)
             if result is None:
                 return
             text = result.bestTranscription().formattedString()
@@ -62,7 +66,10 @@ class Recognizer:
             lambda buf, _: self._request.appendAudioPCMBuffer_(buf)
         )
 
-        self._engine.startAndReturnError_(None)
+        try:
+            self._engine.startAndReturnError_(None)
+        except Exception as e:
+            raise RuntimeError(f"AVAudioEngine failed to start: {e}") from e
 
     def stop(self) -> None:
         if self._engine:
