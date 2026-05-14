@@ -7,7 +7,7 @@ COLORS = {
     "current": "#ffffff",
     "accent":  "#6c8eff",
     "cursor":  "#6c8eff",
-    "hl_bg":   "#1a1e30",   # rgba(108,142,255,0.12) blended on bg
+    "hl_bg":   "#1e2848",   # rgba(108,142,255,0.22) blended on bg
     "dot_r":   "#ff5f56",
     "dot_y":   "#ffbd2e",
     "dot_g":   "#27c93f",
@@ -81,11 +81,11 @@ class SubtitleWindow:
         # ── Current-line highlight background + accent bar ─────────────
         hl_y1, hl_y2 = SLOTS_Y[2] - 44, SLOTS_Y[2] + 6
         self._hl_rect = self._canvas.create_rectangle(
-            BAR_X + 3, hl_y1, CANVAS_W - 10, hl_y2,
+            BAR_X + 4, hl_y1, CANVAS_W - 10, hl_y2,
             fill=COLORS["bg"], outline=""
         )
         self._bar = self._canvas.create_rectangle(
-            BAR_X, hl_y1, BAR_X + 3, hl_y2,
+            BAR_X, hl_y1, BAR_X + 4, hl_y2,
             fill=COLORS["bg"], outline=""
         )
 
@@ -123,11 +123,11 @@ class SubtitleWindow:
             bbox = self._canvas.bbox(self._line_ids[2])
             if bbox:
                 x1, y1, x2, y2 = bbox
-                pad = 6
+                pad = 10
                 self._canvas.coords(self._hl_rect,
-                                    BAR_X + 3, y1 - pad, CANVAS_W - 10, y2 + pad)
+                                    BAR_X + 4, y1 - pad, CANVAS_W - 10, y2 + pad)
                 self._canvas.coords(self._bar,
-                                    BAR_X, y1 - pad, BAR_X + 3, y2 + pad)
+                                    BAR_X, y1 - pad, BAR_X + 4, y2 + pad)
             self._canvas.itemconfigure(self._hl_rect, fill=COLORS["hl_bg"])
             self._canvas.itemconfigure(self._bar,     fill=COLORS["accent"])
         else:
