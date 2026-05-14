@@ -49,7 +49,7 @@ The most recent sentence is **highlighted** with a blue accent bar. Older senten
 
 **Option A — Download the app (no Python needed)**
 
-1. Download [`Live-Captions-v1.0.0-macOS.zip`](https://github.com/LeaiFish/live-captions/releases/latest) from Releases
+1. Download [`Live-Captions-v1.1.0-macOS.zip`](https://github.com/LeaiFish/live-captions/releases/latest) from Releases
 2. Unzip and drag `Live Captions.app` to your Applications folder
 3. Right-click → Open on first launch (macOS Gatekeeper)
 4. Grant microphone and speech recognition permissions when prompted
@@ -137,7 +137,7 @@ Live Captions 是一个 macOS 浮动字幕窗口，利用苹果原生语音识�
 
 **方式 A — 直接下载 App（无需 Python 环境）**
 
-1. 从 [Releases 页面](https://github.com/LeaiFish/live-captions/releases/latest) 下载 `Live-Captions-v1.0.0-macOS.zip`
+1. 从 [Releases 页面](https://github.com/LeaiFish/live-captions/releases/latest) 下载 `Live-Captions-v1.1.0-macOS.zip`
 2. 解压后将 `Live Captions.app` 拖到 Applications 文件夹
 3. 首次打开时右键 → 打开（绕过 Gatekeeper）
 4. 授予麦克风和语音识别权限

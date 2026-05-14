@@ -42,11 +42,11 @@ app = BUNDLE(
     name='Live Captions.app',
     icon=None,
     bundle_identifier='com.leaifi.live-captions',
-    version='1.0.0',
+    version='1.1.0',
     info_plist={
         'CFBundleName':               'Live Captions',
         'CFBundleDisplayName':        'Live Captions',
-        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleShortVersionString': '1.1.0',
         'LSMinimumSystemVersion':     '13.0',
         'NSMicrophoneUsageDescription':
             'Live Captions needs microphone access to transcribe speech in real time.',
