@@ -147,4 +147,15 @@ class SubtitleWindow:
     def _drag_move(self, event):
         x = self.root.winfo_x() + event.x - self._drag_x
         y = self.root.winfo_y() + event.y - self._drag_y
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        snap = 20
+        if x < snap:
+            x = 0
+        elif x + CANVAS_W > sw - snap:
+            x = sw - CANVAS_W
+        if y < snap:
+            y = 0
+        elif y + CANVAS_H > sh - snap:
+            y = sh - CANVAS_H
         self.root.geometry(f"+{x}+{y}")
