@@ -1,5 +1,6 @@
 import os
 import queue
+import sys
 import time
 import tkinter as tk
 from datetime import datetime
@@ -7,6 +8,25 @@ from pathlib import Path
 from history import History
 from window import SubtitleWindow
 from recognizer import Recognizer
+
+
+def _set_dock_icon() -> None:
+    """Set Dock icon at runtime via AppKit, bypassing macOS unsigned-app template."""
+    try:
+        from AppKit import NSApplication, NSImage
+        # When bundled, Resources sits two levels up from the executable
+        exe_dir = Path(sys.executable).parent
+        for candidate in [
+            exe_dir.parent / "Resources" / "AppIcon.icns",
+            Path(__file__).parent / "assets" / "AppIcon.icns",
+        ]:
+            if candidate.exists():
+                img = NSImage.alloc().initWithContentsOfFile_(str(candidate))
+                if img:
+                    NSApplication.sharedApplication().setApplicationIconImage_(img)
+                return
+    except Exception:
+        pass
 
 PARTIAL_TIMEOUT = 1.5  # seconds of silence before auto-finalizing partial
 
@@ -39,6 +59,7 @@ def setup_global_hotkeys(on_toggle: callable, on_copy: callable) -> None:
 
 
 def main():
+    _set_dock_icon()
     root = tk.Tk()
     history = History(max_lines=3)
     window = SubtitleWindow(root)
