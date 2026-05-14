@@ -1,3 +1,4 @@
+import os
 import queue
 import time
 import tkinter as tk
@@ -72,7 +73,6 @@ def main():
         history.partial = ""
         last_partial[0] = ""
         last_partial_t[0] = 0.0
-        recognized_prefix[0] = ""
         if recognizer_ref:
             recognizer_ref[0].stop()
         new_rec = Recognizer(on_result=on_result, locale=locale)
@@ -95,19 +95,9 @@ def main():
 
     last_partial: list[str]   = [""]
     last_partial_t: list[float] = [0.0]
-    # Cumulative text already committed to history in the current recognizer session.
-    # SFSpeechRecognizer never resets its buffer mid-task, so we strip this prefix
-    # from every incoming result to avoid showing already-finalized sentences again.
-    recognized_prefix: list[str] = [""]
     _running = [True]
 
     def on_result(text: str, is_final: bool) -> None:
-        prefix = recognized_prefix[0]
-        if prefix and text.startswith(prefix):
-            text = text[len(prefix):].lstrip()
-        if is_final:
-            # The recognizer task ended naturally; next task starts fresh.
-            recognized_prefix[0] = ""
         result_queue.put((text, is_final))
 
     def poll() -> None:
@@ -137,11 +127,14 @@ def main():
             text = last_partial[0]
             last_partial[0] = ""
             last_partial_t[0] = 0.0
-            recognized_prefix[0] = (recognized_prefix[0] + " " + text).lstrip() + " "
             history.update(text, is_final=True)
             transcript.append(text)
             d = history.display()
             window.render(lines=d["lines"], partial=d["partial"], all_lines=transcript)
+            # Restart the recognition task so its internal buffer starts fresh.
+            # Without this, the next partial would include the just-finalized text
+            # again (SFSpeechRecognizer accumulates across the lifetime of one task).
+            recognizer_ref[0].restart_task()
 
         root.after(50, poll)
 
@@ -159,6 +152,7 @@ def main():
                                    f"Save {len(transcript)} sentence(s) to ~/Documents/captions/?"):
                 save_transcript()
         root.destroy()
+        os._exit(0)
 
     root.protocol("WM_DELETE_WINDOW", on_close)
     root.mainloop()
