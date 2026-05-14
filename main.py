@@ -116,7 +116,11 @@ def main():
 
     def on_close():
         recognizer.stop()
-        save_transcript()
+        if transcript:
+            from tkinter import messagebox
+            if messagebox.askyesno("Save transcript?",
+                                   f"Save {len(transcript)} sentence(s) to ~/Documents/captions/?"):
+                save_transcript()
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", on_close)
