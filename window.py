@@ -19,13 +19,13 @@ FONT_SIZE_MIN = 10
 FONT_SIZE_MAX = 24
 
 CANVAS_W   = 420
-CANVAS_H   = 168
+CANVAS_H   = 185
 WRAP_W     = 370
 PAD_X      = 26
 BAR_X      = 14
 TITLEBAR_H = 28
 
-SLOTS_Y = [72, 112, 152]
+SLOTS_Y = [68, 112, 165]
 
 SCROLL_RESUME_MS = 3000  # ms of inactivity before returning to live mode
 
@@ -222,7 +222,7 @@ class SubtitleWindow:
             bbox = self._canvas.bbox(self._line_ids[2])
             if bbox:
                 x1, y1, x2, y2 = bbox
-                hl_top = max(y1 - 8, SLOTS_Y[1] + 6)
+                hl_top = max(y1 - 8, SLOTS_Y[1] + 10)
                 hl_bot = y2 + 8
                 self._canvas.coords(self._hl_rect,
                                     BAR_X + 4, hl_top, CANVAS_W - 12, hl_bot)
