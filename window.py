@@ -65,10 +65,8 @@ class SubtitleWindow:
             lbl.configure(text=text, fg=color_map[i])
             is_current = (i == 2 and text)
             bar.configure(bg=COLORS["accent"] if is_current else COLORS["bg"])
-        self._cursor_label.configure(text="▋" if partial else "")
-        if partial:
-            self._labels[2].configure(text=partial, fg=COLORS["current"])
-            self._accent[2].configure(bg=COLORS["accent"])
+        # partial shows in the cursor row, not overwriting the last confirmed line
+        self._cursor_label.configure(text=("▋  " + partial) if partial else "")
 
     def _drag_start(self, event):
         self._drag_x = event.x
