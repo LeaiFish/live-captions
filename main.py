@@ -1,10 +1,13 @@
 import queue
+import time
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from history import History
 from window import SubtitleWindow
 from recognizer import Recognizer
+
+PARTIAL_TIMEOUT = 1.5  # seconds of silence before auto-finalizing partial
 
 # NSEvent key constants
 NSKeyDownMask = 1 << 10
@@ -69,6 +72,9 @@ def main():
         out_file.write_text("\n".join(transcript), encoding="utf-8")
         print(f"[Transcript] Saved to {out_file}")
 
+    last_partial: list[str]   = [""]
+    last_partial_t: list[float] = [0.0]
+
     def on_result(text: str, is_final: bool) -> None:
         result_queue.put((text, is_final))
 
@@ -79,10 +85,29 @@ def main():
                 history.update(text, is_final)
                 if is_final:
                     transcript.append(text)
+                    last_partial[0] = ""
+                    last_partial_t[0] = 0.0
+                else:
+                    if text != last_partial[0]:
+                        last_partial[0] = text
+                        last_partial_t[0] = time.monotonic()
                 d = history.display()
                 window.render(lines=d["lines"], partial=d["partial"])
         except queue.Empty:
             pass
+
+        # Auto-finalize if partial hasn't changed for PARTIAL_TIMEOUT seconds
+        if (last_partial[0]
+                and last_partial_t[0]
+                and time.monotonic() - last_partial_t[0] > PARTIAL_TIMEOUT):
+            text = last_partial[0]
+            last_partial[0] = ""
+            last_partial_t[0] = 0.0
+            history.update(text, is_final=True)
+            transcript.append(text)
+            d = history.display()
+            window.render(lines=d["lines"], partial=d["partial"])
+
         root.after(50, poll)
 
     recognizer = Recognizer(on_result=on_result)
